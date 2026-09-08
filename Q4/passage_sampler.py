@@ -3,6 +3,15 @@ import re
 
 
 def sample_passage(n_sentences=6, seed=None):
+    import nltk
+    for pkg in ['gutenberg', 'punkt', 'punkt_tab']:
+        try:
+            nltk.data.find(f'corpora/{pkg}')
+        except LookupError:
+            try:
+                nltk.data.find(f'tokenizers/{pkg}')
+            except LookupError:
+                nltk.download(pkg, quiet=True)
     from nltk.corpus import gutenberg
     rng = random.Random(seed)
     fileid = rng.choice(gutenberg.fileids())
@@ -12,6 +21,7 @@ def sample_passage(n_sentences=6, seed=None):
     else:
         start = rng.randint(0, len(sents) - n_sentences)
     return sents[start:start + n_sentences], fileid
+
 
 
 def normalize_sentence(sent):

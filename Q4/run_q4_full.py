@@ -1,13 +1,26 @@
 import os
 import sys
 import random
+
+BASE = os.path.dirname(os.path.abspath(__file__))
+if BASE not in sys.path:
+    sys.path.insert(0, BASE)
+
+q1_candidates = [
+    os.environ.get("Q1_DIR"),
+    os.path.join(BASE, "..", "Q1"),
+    os.path.join(BASE, "Q1"),
+]
+for p in q1_candidates:
+    if p and os.path.isdir(p) and p not in sys.path:
+        sys.path.insert(0, os.path.abspath(p))
+        break
+
 from q4_runtime import Q4Runtime
 from passage_sampler import sample_passage, passage_to_tokens
 from q4_pipeline import MERGE_PROB, GRAMMAR_TRIGGER_N, run_simulated_passage
 from q4_analysis import analyze_passage, print_summary_table
 
-BASE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(BASE, 'Q1'))
 
 
 def main():

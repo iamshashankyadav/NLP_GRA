@@ -119,15 +119,29 @@ class CKYPCFG:
         return tree, score, 'parsed'
 
 
+import os
+
+_CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
 def save_parser(grammar, path='q4_pcfg.pkl'):
+    if not os.path.isabs(path):
+        path = os.path.join(_CURRENT_DIR, path)
     with open(path, 'wb') as f:
         pickle.dump(grammar, f)
 
 
 def load_parser(path='q4_pcfg.pkl'):
+    if not os.path.isabs(path):
+        candidates = [path, os.path.join(_CURRENT_DIR, path)]
+        for c in candidates:
+            if os.path.exists(c):
+                path = c
+                break
     with open(path, 'rb') as f:
         grammar = pickle.load(f)
     return CKYPCFG(grammar)
 
 def parse_sentence(parser, tokens, forced_tags=None):
     return parser.parse(tokens, forced_tags=forced_tags)
+

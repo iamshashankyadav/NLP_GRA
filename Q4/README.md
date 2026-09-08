@@ -2,13 +2,17 @@
 
 This version implements all five parts of Q4 as one pipeline.
 
-## 1. Prepare Q1 artifact once
+## 1. Prepare Q1 artifact once (if needed)
 
-Q4 does not retrain Q1 during execution. If `q1_artifacts.pkl` is not present:
+Q4 does not retrain Q1 during execution. `q1_artifacts.pkl` is already pre-generated. If you ever need to recreate it:
 
 ```bash
-cd Q4_package
-Q1_DIR=./Q1 python3 prepare_q1_artifact.py
+# From repository root
+python Q4/prepare_q1_artifact.py
+
+# Or from inside Q4
+cd Q4
+python prepare_q1_artifact.py
 ```
 
 This creates the reusable trained Q1 segmentation LM + POS HMM artifact.
@@ -16,23 +20,38 @@ This creates the reusable trained Q1 segmentation LM + POS HMM artifact.
 ## 2. Run the integrated command-line pipeline
 
 ```bash
-python3 run_q4_full.py
+# From repository root
+python Q4/run_q4_full.py
+
+# Or from inside Q4
+cd Q4
+python run_q4_full.py
 ```
 
 It loads Q1/Q3 artifacts, trains Q4's shared Brown add-k bigram/trigram models, induces the PTB PCFG, samples a random 6-sentence Gutenberg passage, simulates merged typing, produces live alerts, reports latency, and performs final PCFG/bigram/trigram analysis.
 
-## 3. Run Streamlit
+## 3. Run Streamlit (Deployment / Web UI)
 
 ```bash
+# From repository root
+streamlit run Q4/app.py
+
+# Or from inside Q4
+cd Q4
 streamlit run app.py
 ```
 
 The text area is processed incrementally when text is appended. If an earlier part of the text is edited, the checker resets and reprocesses the passage so stale state is not retained.
 
-## 4. Speed Demon
+## 4. Speed Demon Benchmark
 
 ```bash
-python3 benchmark.py
+# From repository root
+python Q4/benchmark.py
+
+# Or from inside Q4
+cd Q4
+python benchmark.py
 ```
 
 The benchmark uses exactly 1,000 Brown words and reports total/average segmentation+spelling latency and isolated grammar-trigger latency.

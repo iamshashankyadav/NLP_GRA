@@ -1,10 +1,25 @@
 import os
+import sys
+
+BASE = os.path.dirname(os.path.abspath(__file__))
+if BASE not in sys.path:
+    sys.path.insert(0, BASE)
+
+q1_candidates = [
+    os.environ.get("Q1_DIR"),
+    os.path.join(BASE, "..", "Q1"),
+    os.path.join(BASE, "Q1"),
+]
+for p in q1_candidates:
+    if p and os.path.isdir(p) and p not in sys.path:
+        sys.path.insert(0, os.path.abspath(p))
+        break
+
 import streamlit as st
 from q4_runtime import Q4Runtime
 from q4_pipeline import tokenize_text, GRAMMAR_TRIGGER_N
 from q4_analysis import analyze_passage
 
-BASE = os.path.dirname(os.path.abspath(__file__))
 
 @st.cache_resource
 def get_runtime():

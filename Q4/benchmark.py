@@ -1,10 +1,15 @@
 import os
+import sys
 import random
 import time
+
+BASE = os.path.dirname(os.path.abspath(__file__))
+if BASE not in sys.path:
+    sys.path.insert(0, BASE)
+
 from q4_runtime import Q4Runtime
 from q4_pipeline import simulate_merged_typing
 
-BASE = os.path.dirname(os.path.abspath(__file__))
 
 
 def get_1000_words():

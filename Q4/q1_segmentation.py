@@ -2,13 +2,25 @@ import pickle
 import sys
 import os
 
-# Add the extracted Q1 folder to the path so we can import its modules directly
-_Q1_DIR = os.environ.get("Q1_DIR", "./Q1")
-if _Q1_DIR not in sys.path:
+_CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+_CANDIDATE_Q1_DIRS = [
+    os.environ.get("Q1_DIR"),
+    os.path.join(_CURRENT_DIR, "..", "Q1"),
+    os.path.join(_CURRENT_DIR, "Q1"),
+    "./Q1"
+]
+_Q1_DIR = None
+for _cand in _CANDIDATE_Q1_DIRS:
+    if _cand and os.path.isdir(_cand):
+        _Q1_DIR = os.path.abspath(_cand)
+        break
+
+if _Q1_DIR and _Q1_DIR not in sys.path:
     sys.path.insert(0, _Q1_DIR)
 
 from segmentation import TrigramLM, segment_viterbi, MAX_WORD_LEN, BEAM_WIDTH as SEG_BEAM_WIDTH
 from tagger import HMMTagger, viterbi_tag, BEAM_WIDTH as TAG_BEAM_WIDTH
+
 
 
 class SegmentationDecoder:
@@ -67,19 +79,27 @@ def train_and_save_q1_artifacts(train_sents, output_path="q1_artifacts.pkl"):
 
 
 def load_q1_artifacts(path="q1_artifacts.pkl", reference_vocab=None):
+    if not os.path.isabs(path):
+        candidates = [
+            path,
+            os.path.join(_CURRENT_DIR, path),
+            os.path.join(_CURRENT_DIR, "..", "Q1", path)
+        ]
+        for c in candidates:
+            if os.path.exists(c):
+                path = c
+                break
     with open(path, "rb") as f:
         data = pickle.load(f)
     return SegmentationDecoder(data["lm"], data["hmm"], reference_vocab=reference_vocab)
 
 
 if __name__ == "__main__":
-    # One-time training + save, using Q1's own data pipeline (Brown corpus).
-    # Run this once; afterwards Q4 always loads the pickle instead.
-    sys.path.insert(0, _Q1_DIR)
     from data_handling import load_english_data
 
+    out_path = os.path.join(_CURRENT_DIR, "q1_artifacts.pkl")
     train_sents, dev_sents, test_sents = load_english_data(split_ratio=0.8)
-    lm, hmm = train_and_save_q1_artifacts(train_sents, "q1_artifacts.pkl")
+    lm, hmm = train_and_save_q1_artifacts(train_sents, out_path)
 
     decoder = SegmentationDecoder(lm, hmm)
 
@@ -87,3 +107,4 @@ if __name__ == "__main__":
     for tok in ["andthe", "thequickbrownfox", "extraordinary", "cats"]:
         words, tags, score, single_better = decoder.segment_and_tag(tok)
         print(f"'{tok}' -> words={words} tags={tags} score={score:.2f} single_word_is_better={single_better}")
+

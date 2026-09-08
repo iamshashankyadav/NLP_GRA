@@ -1,4 +1,8 @@
+import os
 import pickle
+
+_CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+
 
 
 class SpellingCorrector:
@@ -63,6 +67,17 @@ class SpellingCorrector:
 
 
 def load_q3_artifacts(path="spelling_corrector_artifacts.pkl"):
+    if not os.path.isabs(path):
+        candidates = [
+            path,
+            os.path.join(_CURRENT_DIR, path),
+            os.path.join(_CURRENT_DIR, "..", "Q3", "part5_spelling_corrector_app", "spelling_corrector_artifacts.pkl"),
+            os.path.join(_CURRENT_DIR, "..", "Q3", path),
+        ]
+        for c in candidates:
+            if os.path.exists(c):
+                path = c
+                break
     with open(path, "rb") as f:
         data = pickle.load(f)
     return SpellingCorrector(
@@ -75,7 +90,7 @@ def load_q3_artifacts(path="spelling_corrector_artifacts.pkl"):
 
 
 if __name__ == "__main__":
-    corrector = load_q3_artifacts("/mnt/user-data/uploads/spelling_corrector_artifacts.pkl")
+    corrector = load_q3_artifacts()
     print(f"Loaded vocab of size {len(corrector.vocab)}")
 
     tests = ["onn", "helo", "wrld", "recieve", "teh"]
@@ -84,3 +99,4 @@ if __name__ == "__main__":
         cands = corrector.generate_candidates(w)
         best, changed = corrector.correct(w)
         print(f"'{w}': in_vocab={in_vocab}, candidates={cands[:8]}, correction='{best}' (changed={changed})")
+

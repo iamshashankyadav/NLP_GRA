@@ -1,12 +1,26 @@
-import random
+import os
 import sys
+import random
 
-sys.path.insert(0, "./Q1")  # adjust if your Q1 folder lives elsewhere
+BASE = os.path.dirname(os.path.abspath(__file__))
+if BASE not in sys.path:
+    sys.path.insert(0, BASE)
+
+q1_candidates = [
+    os.environ.get("Q1_DIR"),
+    os.path.join(BASE, "..", "Q1"),
+    os.path.join(BASE, "Q1"),
+]
+for p in q1_candidates:
+    if p and os.path.isdir(p) and p not in sys.path:
+        sys.path.insert(0, os.path.abspath(p))
+        break
 
 from q1_segmentation import load_q1_artifacts
 from q3_spelling import load_q3_artifacts
 from q4_lm import build_brown_lms
 from q4_pipeline import LiveChecker, run_simulated_passage, MERGE_PROB, GRAMMAR_TRIGGER_N
+
 
 
 def sample_passage(corpus_name="gutenberg", n_sentences=6, seed=None):
@@ -40,11 +54,11 @@ def sample_passage(corpus_name="gutenberg", n_sentences=6, seed=None):
 
 def main():
     print("Loading Q1 artifacts (segmentation LM + HMM tagger)...")
-    q3_corrector_for_vocab = load_q3_artifacts("spelling_corrector_artifacts.pkl")
-    seg_decoder = load_q1_artifacts("q1_artifacts.pkl", reference_vocab=q3_corrector_for_vocab.vocab)
+    q3_corrector_for_vocab = load_q3_artifacts()
+    seg_decoder = load_q1_artifacts(reference_vocab=q3_corrector_for_vocab.vocab)
 
     print("Loading Q3 spelling corrector artifacts...")
-    spell_corrector = load_q3_artifacts("spelling_corrector_artifacts.pkl")
+    spell_corrector = load_q3_artifacts()
 
     print("Training Q4's shared Brown bigram/trigram LM (add-k smoothing)...")
     bigram_lm, trigram_lm = build_brown_lms(k=0.1)  # full Brown; drop sample_size
@@ -62,9 +76,9 @@ def main():
     state = run_simulated_passage(words, checker, delay=0.05, merge_prob=MERGE_PROB)
 
     print("\n=== FINAL RECONSTRUCTED TOKEN STREAM ===")
-    print(" ".join(state.tokens_seen))
+    print(" ".join(state.tokens))
 
-    print(f"\nSegmentation merges resolved: {state.seg_merges_resolved}")
+    print(f"\nSegmentation merges resolved: {state.seg_merges}")
     print(f"Spelling corrections applied: {state.spelling_corrections}")
 
     print("\n=== ALERTS ===")
@@ -75,6 +89,7 @@ def main():
     report = checker.report_latency()
     print(f"Avg per-token segmentation+spelling check: {report['avg_seg_spell_ms']:.4f} ms")
     print(f"Avg per-trigger grammar/real-word check:   {report['avg_grammar_ms']:.4f} ms")
+
 
 
 if __name__ == "__main__":

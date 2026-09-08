@@ -57,12 +57,26 @@ def build_brown_lms(k=0.1):
     return bi, tri
 
 
+import os
+
+_CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
 def save_lms(bigram_lm, trigram_lm, path='q4_lms.pkl'):
+    if not os.path.isabs(path):
+        path = os.path.join(_CURRENT_DIR, path)
     with open(path, 'wb') as f:
         pickle.dump({'bigram': bigram_lm, 'trigram': trigram_lm}, f)
 
 
 def load_lms(path='q4_lms.pkl'):
+    if not os.path.isabs(path):
+        candidates = [path, os.path.join(_CURRENT_DIR, path)]
+        for c in candidates:
+            if os.path.exists(c):
+                path = c
+                break
     with open(path, 'rb') as f:
         x = pickle.load(f)
     return x['bigram'], x['trigram']
+
