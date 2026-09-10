@@ -63,7 +63,15 @@ class CKYPCFG:
                 self.unary[rhs[0]].append((lhs, math.log(max(p.prob(), 1e-300))))
             elif len(rhs) == 2:
                 self.binary[(rhs[0], rhs[1])].append((lhs, math.log(max(p.prob(), 1e-300))))
+        self.preterminals = set(self.lexical_tags())
+        self.unknown_lexical_logprob = min(
+            (lp for entries in self.lex.values() for _, lp in entries),
+            default=math.log(1e-12)
+        )
         self._unary_closure_cache = {}
+
+    def lexical_tags(self):
+        return {tag for entries in self.lex.values() for tag, _ in entries}
 
     def _unary_closure(self, chart_cell):
         changed = True
@@ -88,6 +96,14 @@ class CKYPCFG:
             if forced_tags and i < len(forced_tags) and forced_tags[i]:
                 allowed = {forced_tags[i]}
             lexical = self.lex.get(word, [])
+            if not lexical:
+                candidate_tags = self.preterminals
+                if allowed is not None:
+                    candidate_tags = [tag for tag in candidate_tags if str(tag) in allowed]
+                lexical = [
+                    (tag, self.unknown_lexical_logprob)
+                    for tag in candidate_tags
+                ]
             for tag, lp in lexical:
                 if allowed is not None and str(tag) not in allowed:
                     continue
